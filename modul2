@@ -1,0 +1,178 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+struct node{
+    int value;
+    node *left;
+    node *right;
+};
+
+class btree{
+public:
+    btree();
+    
+    void insert(int key);
+    void inorder_print();
+    void swap_nodes();
+    int  get_max_height();
+    void magic_function();
+    
+private:
+    void insert(int key, node *leaf);
+    void inorder_print(node *leaf);
+    void swap(node **node1, node **node2);
+    void swap_nodes(node *root, int level, int k);
+    int    get_height(node *root);
+    int   max(int a, int b);
+    void  get_nodes_on_half_height(node *leaf);
+    node  *min_value(node *node);
+    node  *delete_node(node *root, int key);
+    node *root;
+    int max_height;
+    vector<node*> nodes_on_half_height;
+    
+};
+
+
+btree::btree(){
+    root = NULL;
+}
+
+void btree::insert(int key, node *leaf){
+    
+    if(key < leaf->value){
+        if(leaf->left != NULL){
+            insert(key, leaf->left);
+        }else{
+            leaf->left = new node;
+            leaf->left->value = key;
+            leaf->left->left = NULL;
+            leaf->left->right = NULL;
+        }
+    }else if(key >= leaf->value){
+        if(leaf->right != NULL){
+            insert(key, leaf->right);
+        }else{
+            leaf->right = new node;
+            leaf->right->value = key;
+            leaf->right->right = NULL;
+            leaf->right->left = NULL;
+        }
+    }
+    
+}
+
+void btree::insert(int key){
+    if(root != NULL){
+        insert(key, root);
+    }else{
+        root = new node;
+        root->value = key;
+        root->left = NULL;
+        root->right = NULL;
+    }
+    max_height = get_height(root);
+}
+
+void btree::inorder_print(){
+    inorder_print(root);
+    cout << "\n";
+}
+
+void btree::inorder_print(node *leaf){
+    if(leaf != NULL){
+        inorder_print(leaf->left);
+        cout << leaf->value << ",";
+        inorder_print(leaf->right);
+    }
+}
+
+int    btree::get_height(node *root) {
+    if (!root)
+        return 0;
+    
+    int lh = get_height(root->left);
+    int rh = get_height(root->right);
+    return 1 + max(lh, rh);
+}
+
+int btree::max(int a, int b) {
+    return (a > b) ? a : b;
+}
+
+void  btree::get_nodes_on_half_height(node *leaf) {
+    if (leaf) {
+        get_nodes_on_half_height(leaf->left);
+        if (this->max_height - get_height(leaf) == this->max_height / 2 && get_height(leaf->right) == get_height(leaf->right)) {
+            cout << leaf->value << endl;
+            this->nodes_on_half_height.push_back(leaf);
+        }
+        get_nodes_on_half_height(leaf->right);
+    }
+}
+
+node  *btree::min_value(node *leaf) {
+    if (leaf) {
+        node *cur = leaf;
+        while (cur && cur->left)
+            cur = cur->left;
+        return leaf;
+    }
+    return 0;
+}
+
+int btree::get_max_height() {
+    return this->max_height;
+}
+
+node  *btree::delete_node(node *root, int value) {
+    if (!root)
+        return root;
+    if (value < root->value)
+        root->left = delete_node(root->left, value);
+    else if (value > root->value)
+        root->right = delete_node(root->right, value);
+    else {
+        if (root->left == NULL) {
+            node *tmp = root->right;
+            free(root);
+            return tmp;
+        }
+        else if (root->right == NULL) {
+            node *tmp = root->left;
+            free(root);
+            return tmp;
+        }
+        node *tmp = min_value(root->right);
+        root->value = tmp->value;
+        root->right = delete_node(root->right, tmp->value);
+    }
+    return root;
+}
+
+void  btree::magic_function() {
+    get_nodes_on_half_height(root);
+    for (vector<node*>::iterator it = nodes_on_half_height.begin(); it < nodes_on_half_height.end(); ++it) {
+        delete_node(root, (*it)->value);
+    }
+}
+int main(){
+    
+    //btree tree;
+    btree *tree = new btree();
+    
+    tree->insert(5);
+    tree->insert(3);
+    tree->insert(7);
+    tree->insert(2);
+    tree->insert(4);
+    tree->insert(6);
+    tree->insert(8);
+    
+    tree->inorder_print();
+    tree->magic_function();
+    tree->inorder_print();
+    delete tree;
+}
